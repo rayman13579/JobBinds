@@ -1,8 +1,11 @@
-﻿using Dalamud.Game.ClientState.Conditions;
+﻿using Dalamud.Game;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
 using Dalamud.Plugin;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Common.Configuration;
 
 namespace JobBinds;
@@ -17,17 +20,24 @@ public class Plugin : IDalamudPlugin
 
     private CommandManager CommandManager { get; init; }
 
+    public static SigScanner SigScanner { get; set; }
+
     private Configuration Configuration { get; init; }
 
     private PluginUI PluginUI { get; init; }
 
-    public Plugin(DalamudPluginInterface pluginInterface, CommandManager commandManager)
+    private KeybindModule KeybindModule;
+
+    public Plugin(DalamudPluginInterface pluginInterface, CommandManager commandManager, SigScanner sigScanner)
     {
         PluginInterface = pluginInterface;
         CommandManager = commandManager;
+        SigScanner = sigScanner;
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Configuration.Initialize(PluginInterface);
         PluginUI = new PluginUI(Configuration);
+
+        KeybindModule = new KeybindModule(sigScanner);
 
         CommandManager.AddHandler(OpenCommand, new CommandInfo(OpenPlugin));
 
@@ -53,5 +63,7 @@ public class Plugin : IDalamudPlugin
     public void Dispose()
     {
         PluginUI.Dispose();
+        KeybindModule.Dispose();
+        CommandManager.RemoveHandler(OpenCommand);
     }
 }

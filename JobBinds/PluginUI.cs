@@ -1,8 +1,9 @@
 ﻿using System.Numerics;
-using Dalamud.Game.ClientState.Party;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using FFXIVClientStructs.FFXIV.Common.Configuration;
+using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
 namespace JobBinds;
 
@@ -41,7 +42,7 @@ public class PluginUI : IDisposable
         DrawConfigWindow();
     }
 
-    public void DrawMainWindow()
+    public unsafe void DrawMainWindow()
     {
         if (!Visible)
         {
@@ -50,13 +51,32 @@ public class PluginUI : IDisposable
 
         ImGui.SetNextWindowSize(new Vector2(300, 300), ImGuiCond.FirstUseEver);
         ImGui.SetNextWindowSizeConstraints(new Vector2(300, 300), new Vector2(float.MaxValue, float.MaxValue));
-        if (ImGui.Begin("JobBinds", ref visible, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
+        if (ImGui.Begin("JobBinds", ref visible))
         {
             ImGui.Text($"Toggle {(configuration.Toggle ? "on" : "off")}");
 
             if (ImGui.Button("Open Settings"))
             {
                 ConfigVisible = true;
+            }
+
+            try
+            {
+                if (ImGui.Button("Set Keybind"))
+                {
+                    KeybindModule.KeybindHook.Original(1546165053088, 0, 1, 332, 1);
+                }
+                
+                AgentInterface* configKeyAgent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.Configkey);
+
+                if (ImGui.Button("Toggle Keybinds"))
+                {
+                    configKeyAgent->Show();
+                }
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error("rip", e);
             }
         }
         ImGui.End();
